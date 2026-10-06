@@ -1,0 +1,75 @@
+name: Marine Monitor
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'check=live alerts; preview=live no send; test=connection; sample=no send; sample-alert=fake matching alert'
+        type: choice
+        default: check
+        options:
+          - check
+          - preview
+          - test
+          - sample
+          - sample-alert
+
+permissions:
+  contents: write
+
+concurrency:
+  group: marine-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test parser and notification logic
+        run: python -m unittest discover -s tests -v
+      - name: Check forecast or run selected test
+        env:
+          RUN_MODE: ${{ inputs.mode || 'check' }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NWS_USER_AGENT: ${{ secrets.NWS_USER_AGENT }}
+          PERIOD_MODE: ${{ vars.PERIOD_MODE || 'wave_detail' }}
+          GATEWAY_ENABLED: ${{ vars.GATEWAY_ENABLED || 'false' }}
+          PHONE_NUMBER: ${{ secrets.PHONE_NUMBER }}
+          CARRIER_GATEWAY: ${{ secrets.CARRIER_GATEWAY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+        run: python monitor.py --mode "$RUN_MODE"
+      - name: Save alert memory and monthly keepalive
+        if: ${{ always() && (github.event_name == 'schedule' || inputs.mode == 'check') }}
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          # A monthly code-repository update helps keep schedules active.
+          p = Path('keepalive.txt')
+          month = datetime.now(timezone.utc).strftime('%Y-%m') + '\n'
+          if not p.exists() or p.read_text() != month:
+              p.write_text(month)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add state.json keepalive.txt
+          if ! git diff --cached --quiet; then
+            git commit -m 'Save marine monitor state and keepalive'
+            git push origin HEAD
+          fi

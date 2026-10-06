@@ -1,0 +1,5 @@
+.TONIGHT...East winds 5 to 10 knots. Seas 1 to 2 feet. Wave Detail: East 2 feet at 8 seconds.
+.WEDNESDAY...Seas 1 foot. Dominant period 7 seconds.
+.WEDNESDAY NIGHT...Seas 2 to 3 feet. Dominant period 9 seconds.
+.THURSDAY...Seas 2 feet or less.
+.FRIDAY...Seas 1 to 2 feet. Wave Detail: East 2 feet at 6 seconds and northeast 1 foot at 10 seconds.
