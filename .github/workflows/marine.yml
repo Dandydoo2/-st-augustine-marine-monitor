@@ -43,6 +43,8 @@ jobs:
         env:
           RUN_MODE: ${{ inputs.mode || 'check' }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          NTFY_EMAIL: ${{ secrets.NTFY_EMAIL }}
           NWS_USER_AGENT: ${{ secrets.NWS_USER_AGENT }}
           PERIOD_MODE: ${{ vars.PERIOD_MODE || 'wave_detail' }}
           GATEWAY_ENABLED: ${{ vars.GATEWAY_ENABLED || 'false' }}
