@@ -1,0 +1,3 @@
+TEST DATA ONLY — NOT A REAL FORECAST
+.TODAY...North winds 10 knots. Seas 2 feet. Dominant period 4 seconds.
+.TONIGHT...North winds 5 knots. Waves 1 foot or less. Wave Detail: North 1 foot at 3 seconds.

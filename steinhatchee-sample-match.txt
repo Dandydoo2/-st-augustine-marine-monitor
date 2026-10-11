@@ -1,0 +1,5 @@
+TEST DATA ONLY — NOT A REAL FORECAST
+.TODAY...North winds 5 knots. Waves 1 foot or less. Wave Detail: North 1 foot at 4 seconds.
+.TONIGHT...North winds 5 to 10 knots. Waves 1 foot or less. Wave Detail: North 1 foot at 4 seconds.
+.WEDNESDAY...North winds 5 knots. Seas 1 foot. Dominant period 4 seconds.
+.WEDNESDAY NIGHT...North winds 5 knots. Waves 1 foot or less.
