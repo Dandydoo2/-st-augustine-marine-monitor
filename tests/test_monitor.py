@@ -109,8 +109,8 @@ class ParserTests(unittest.TestCase):
     def test_seven_dates_no_invented_forecast(self):
         r = m.parse_zone(Path('sample-match.txt').read_text(), ISSUED)
         msg = m.format_message({z:r for z in m.ZONES}, ISSUED, ISSUED, True)
-        self.assertEqual(msg.count('Sun 10/11 forecast not available'), 2)
-        self.assertIn('✅N', msg)
+        self.assertEqual(msg.count('Sun Oct 11\nForecast not available'), 2)
+        self.assertIn('✅ Night:', msg)
         self.assertLess(len(msg.encode()), 4096)
         self.assertEqual(len(m.next_week(r, ISSUED + timedelta(days=7))), 0)
 
