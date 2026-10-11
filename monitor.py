@@ -251,17 +251,38 @@ def compact(record):
 
 
 def format_message(zones, issued, now, test=False):
-    rows = [("TEST ONLY - " if test else "") + "NWS JAX: seas <=2ft & period >=7s", "Issued " + issued.astimezone(LOCAL).strftime("%m/%d %I:%M%p %Z")]
+    def date_label(date):
+        return date.strftime("%a %b ") + str(date.day)
+
+    def conditions(record):
+        sea = "not listed" if record["seas_hi"] is None else fmt_range(record["seas_lo"], record["seas_hi"]) + " ft"
+        if record["occasional"] is not None:
+            sea += " (up to " + fmt_num(record["occasional"]) + ")"
+        period = "not listed" if record["period_lo"] is None else fmt_range(record["period_lo"], record["period_hi"]) + " sec" + ("*" if record["source"] == "wave detail" else "")
+        return sea + " | " + period
+
+    rows = [("TEST ONLY — " if test else "") + "MARINE FORECAST", "Seas: 2 ft or less", "Wave period: 7 seconds or longer", "Updated " + issued.astimezone(LOCAL).strftime("%b %d, %I:%M %p %Z"), "", "MATCHING CONDITIONS"]
     start = now.astimezone(LOCAL).date()
+    matches = sorted((r["date"], r["slot"], zone, r) for zone, records in zones.items() for r in records if qualifies(r))
+    if not matches:
+        rows.append("No matching periods in this forecast.")
+    for date, slot, zone, record in matches[:6]:
+        rows.extend(["", date_label(datetime.fromisoformat(date)) + " — " + ("Day" if slot == "D" else "Night") + " (" + zone + ")", "Seas / period: " + conditions(record)])
+    if len(matches) > 6:
+        rows.append("More matches marked ✅ in the forecast below.")
+    rows.extend(["", "7-DAY FORECAST", "Each line shows seas | wave period."])
     for zone, records in zones.items():
-        rows.append(zone + " " + ZONES[zone])
+        rows.extend(["", zone, ZONES[zone].replace("out 20 NM", "within 20 nautical miles")])
         for i in range(7):
             date = start + timedelta(days=i)
             periods = sorted([r for r in records if r["date"] == date.isoformat()], key=lambda r:r["slot"])
-            summary = "; ".join(compact(r) for r in periods) if periods else "forecast not available"
-            rows.append(date.strftime("%a %m/%d") + " " + summary)
-    rows.append("D=day N=night; *=tallest Wave Detail component, estimated period. Missing periods do not match.")
-    rows.append("7 calendar days including today; absent periods unavailable. Criteria match is not a boating safety assessment. Tap link for full NWS text.")
+            rows.extend(["", date_label(date)])
+            if not periods:
+                rows.append("Forecast not available")
+            for record in periods:
+                label = "Day" if record["slot"] == "D" else "Night"
+                rows.append(("✅ " if qualifies(record) else "") + label + ": " + conditions(record))
+    rows.extend(["", "✅ Meets your criteria", "* Period estimated from the tallest Wave Detail component.", "Missing periods do not match. Unlisted day/night periods are unavailable.", "Check the full NWS forecast before boating; a match is not a safety assessment."])
     message = "\n".join(rows)
     if len(message.encode("utf-8")) > 4096:
         raise RuntimeError("Summary exceeds ntfy's 4096-byte message limit")
